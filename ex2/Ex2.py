@@ -375,11 +375,15 @@ class MagicSquareProblem(GeneticAlgorithmProblem):
         return self.__str__()
 
 
-def selection_min(population, population_fitness, randomer):
+def selection_min(population, population_fitness, randomer, shock=False):
     max_f = max(population_fitness)
+    # min_f = min(population_fitness)
     reverse_f = [(max_f - f) + 1 for f in population_fitness]
     reverse_total_f = sum(reverse_f)
     norm_total_f = [f/reverse_total_f for f in reverse_f]
+    if shock:
+        print(population_fitness)
+        norm_total_f.reverse()
     sel1, sel2 = randomer.choice(population, size=2, replace=False, p=norm_total_f)
     return sel1, sel2
 
@@ -407,7 +411,7 @@ class GeneticAlgorithm:
         self.random_state = self.random.get_state()
         self.population_split = population_split
 
-    def generation_step(self, population):
+    def generation_step(self, population, shock):
         new_population = list()
         sorted_population = sorted(population, reverse=self.min_max == 'max')
         sorted_population_fitness = [p.fitness() for p in sorted_population]
@@ -415,12 +419,12 @@ class GeneticAlgorithm:
             for i in range(self.elitism):
                 new_population.append(sorted_population[i])
         for i in range(len(sorted_population) - self.elitism):
-            new_population.append(self.offspring_creation(sorted_population, sorted_population_fitness))
+            new_population.append(self.offspring_creation(sorted_population, sorted_population_fitness, shock=shock))
         return new_population
 
-    def offspring_creation(self, sorted_population, sorted_population_fitness):
+    def offspring_creation(self, sorted_population, sorted_population_fitness, shock):
         self.random.set_state(self.random_state)
-        p1, p2 = self.selection_method(sorted_population, sorted_population_fitness, self.random)
+        p1, p2 = self.selection_method(sorted_population, sorted_population_fitness, self.random, shock=shock)
         self.random_state = self.random.get_state()
         p1_copy = copy.deepcopy(p1)
         offspring = p1_copy.crossover(p2, crossover_points=self.crossover_points)
@@ -440,6 +444,7 @@ class GeneticAlgorithm:
         t = tqdm.trange(max_steps, desc="Result = ")
         self.running_mutation_rate = self.mutation_rate
         last_gen_improvement = 0
+        shock = False
         for i in t:
             self.population = self.learning_step(self.population)
             # ----------------------------------------
@@ -452,7 +457,7 @@ class GeneticAlgorithm:
             #         end = split * self.pop_size // self.population_split
             #         self.population[start:end] = self.generation_step(self.population[start:end])
             # -------------------------------------------
-            self.population = self.generation_step(self.population)
+            self.population = self.generation_step(self.population, shock)
 
             curr = min(self.population)
             curr_average = sum(self.population) / self.pop_size
@@ -461,12 +466,15 @@ class GeneticAlgorithm:
                 min_f = curr.fitness()
                 last_gen_improvement = i
                 self.running_mutation_rate = self.mutation_rate
+                shock = False
 
-            elif i - last_gen_improvement >= 25:
+            elif i - last_gen_improvement >= 11:
                 self.running_mutation_rate = self.mutation_rate
                 last_gen_improvement = i
-            elif i - last_gen_improvement >= 20:
-                self.running_mutation_rate = 10 * self.mutation_rate
+                shock = False
+            elif i - last_gen_improvement >= 10:
+                self.running_mutation_rate = 0.8
+                shock = True
 
             t.set_description(f'Best = {curr.fitness()}, Avg = {curr_average}, Mutation rate: {self.running_mutation_rate}')
 
