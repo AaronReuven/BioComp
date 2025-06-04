@@ -186,37 +186,67 @@ class MagicSquareProblem(GeneticAlgorithmProblem):
 
         return blocks
 
+    # def optimization_action(self, steps=1, learning='lamarkian'):
+    #     # OK SO LET'S CHOOSE RANDOM K INSTEAD OF ALL THE PAIRS
+    #     best_score = self.fitness()
+    #     best_square = self.square.copy()
+    #     true_old_square = self.square.copy()
+    #     K = self.size * self.size
+    #     indices = list(itertools.product(range(self.size), repeat=2))
+    #     rng = self.random
+    #     for _ in range(steps):
+    #         changed = False #changed=improved
+    #         chosen = rng.choice(len(indices), size=K, replace=False)
+    #         for idx in chosen:
+    #             i1, j1 = indices[idx]
+    #             i2, j2 = rng.randint(0, self.size), rng.randint(0, self.size)
+    #             while i2 == i1 and j2 == j1:
+    #                 i2, j2 = rng.randint(0, self.size), rng.randint(0, self.size)
+    #
+    #             #SWAPP
+    #             candidate = best_square.copy()
+    #             candidate[i1, j1], candidate[i2, j2] = candidate[i2, j2], candidate[i1, j1]
+    #             self.square = candidate
+    #             self.computed_fitness = None
+    #             new_score = self.fitness()
+    #
+    #             if new_score < best_score:
+    #                 best_score = new_score
+    #                 best_square = candidate.copy()
+    #                 changed= True
+    #
+    #         if not changed:
+    #             break
+    #     if learning == 'lamarkian':
+    #         self.square = best_square
+    #     elif learning == 'darwinian':
+    #         self.square = true_old_square
+    #     self.computed_fitness = best_score
+    #     return self
+
     def optimization_action(self, steps=1, learning='lamarkian'):
-        # OK SO LET'S CHOOSE RANDOM K INSTEAD OF ALL THE PAIRS
+        # TODO: need to optimize this to have most-perfect squares not be so slow
         best_score = self.fitness()
         best_square = self.square.copy()
         true_old_square = self.square.copy()
-        K = self.size * self.size
         indices = list(itertools.product(range(self.size), repeat=2))
-        rng = self.random
-        for _ in range(steps):
-            changed = False #changed=improved
-            chosen = rng.choice(len(indices), size=K, replace=False)
-            for idx in chosen:
-                i1, j1 = indices[idx]
-                i2, j2 = rng.randint(0, self.size), rng.randint(0, self.size)
-                while i2 == i1 and j2 == j1:
-                    i2, j2 = rng.randint(0, self.size), rng.randint(0, self.size)
-
-                #SWAPP
-                candidate = best_square.copy()
+        k = 0
+        changed = True
+        while changed and k < steps:
+            changed = False
+            k += 1
+            old_square = best_square.copy()
+            for (i1, j1), (i2, j2) in itertools.combinations(indices, 2):
+                candidate = old_square.copy()
+                # Swap two values
                 candidate[i1, j1], candidate[i2, j2] = candidate[i2, j2], candidate[i1, j1]
                 self.square = candidate
                 self.computed_fitness = None
-                new_score = self.fitness()
-
-                if new_score < best_score:
-                    best_score = new_score
+                score = self.fitness()
+                if score < best_score:
+                    changed = True
+                    best_score = score
                     best_square = candidate.copy()
-                    changed= True
-
-            if not changed:
-                break
         if learning == 'lamarkian':
             self.square = best_square
         elif learning == 'darwinian':
@@ -485,10 +515,10 @@ class GeneticAlgorithm:
                 last_gen_improvement = i
                 self.running_mutation_rate = self.mutation_rate
 
-            elif i - last_gen_improvement >= 25:
+            elif i - last_gen_improvement >= 11:
                 self.running_mutation_rate = self.mutation_rate
                 last_gen_improvement = i
-            elif i - last_gen_improvement >= 20:
+            elif i - last_gen_improvement >= 10:
                 self.running_mutation_rate = 10 * self.mutation_rate
 
             t.set_description(f'Best = {curr.fitness()}, Avg = {curr_average}, Mutation rate: {self.running_mutation_rate}')
@@ -503,16 +533,21 @@ class GeneticAlgorithm:
 
 # couple of tests will delete later
 if __name__ == "__main__":
-    size = 8
-    ga = GeneticAlgorithm(MagicSquareProblem, problem_args={'size': size}, elitism=2, crossover_points=4,
-                          mutation_rate=0.05,
-                          # learning_type='darwinian',
-                          learning_type='lamarkian',
-                          learning_cap=1,
-                          population_seeds=np.arange(42, 142), pop_size=100, seed=32)
-    print(ga.play(max_steps=500))
+    # size = 8
+    # ga = GeneticAlgorithm(MagicSquareProblem, problem_args={'size': size}, elitism=2, crossover_points=4,
+    #                       mutation_rate=0.05,
+    #                       # learning_type='darwinian',
+    #                       learning_type='lamarkian',
+    #                       learning_cap=1,
+    #                       population_seeds=np.arange(42, 142), pop_size=100, seed=32)
+    # print(ga.play(max_steps=500))
+    pass
 
-
+# a = np.array([[10,8,1,15], [14,5,4,11], [3,9,16,6], [7,12,13,2]])
+# msp = MagicSquareProblem(4, square=a, mode="most_perfect")
+# print(msp)
+# print(msp.fitness())
+# print(a)
 # a = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 # arr1 = np.array(a).reshape((4,4))
 # print(arr1)
