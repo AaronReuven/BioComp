@@ -421,42 +421,18 @@ class GeneticAlgorithm:
 
         return new_pop
 
-    # def learning_step(self, population):
-    #     """
-    #     Apply local search (Lamarkian or Darwinian) to each individual if learning_type is set.
-    #     Otherwise, return the population unchanged.
-    #     """
-    #     if not self.learning_type:
-    #         return population
-    #
-    #     rng = np.random.RandomState()  # separate RNG for local search
-    #     for indiv in population:
-    #         best_score = indiv.fitness
-    #         for _ in range(self.learning_cap):
-    #             N2 = indiv.N * indiv.N
-    #             chosen = rng.choice(N2, size=N2, replace=False)
-    #             improved = False
-    #             for idx in chosen:
-    #                 idx2 = rng.randint(0, N2)
-    #                 while idx2 == idx:
-    #                     idx2 = rng.randint(0, N2)
-    #                 # Try the swap without committing
-    #                 new_score = indiv.try_swap(idx, idx2, keep_swap=False)
-    #                 if new_score < best_score:
-    #                     # Commit the swap
-    #                     indiv.try_swap(idx, idx2, keep_swap=True)
-    #                     best_score = new_score
-    #                     improved = True
-    #             if not improved:
-    #                 break
-    #     return population
-
     def learning_step(self, population):
-
+        """
+        Apply local search (Lamarkian or Darwinian) to each individual if learning_type is set.
+        Otherwise, return the population unchanged.
+        """
         if not self.learning_type:
             return population
-        indices = list(itertools.combinations(range(population[0].N ** 2), r=2))
+
+        rng = np.random.RandomState()  # separate RNG for local search
         res_population = list()
+        indices = list(itertools.combinations(range(population[0].N ** 2), r=2))
+
         for indiv in population:
             if self.learning_type == 'lamarkian':
                 working_indiv = indiv
@@ -465,17 +441,22 @@ class GeneticAlgorithm:
                 working_indiv._compute_all_sums()
                 working_indiv._compute_fitness()
             best_score = indiv.fitness
-            for k in range(self.learning_cap):
+            for _ in range(self.learning_cap):
+                N2 = indiv.N * indiv.N
+                chosen = rng.choice(len(indices), size=N2, replace=False)
                 improved = False
                 next_working_indiv = working_indiv.copy()
-                for i, j in indices:
-
+                for idx_pair in chosen:
+                    idx, idx2 = indices[idx_pair]
+                    # idx2 = rng.randint(0, N2)
+                    # while idx2 == idx:
+                    #     idx2 = rng.randint(0, N2)
                     # Try the swap without committing
-                    new_score = next_working_indiv.try_swap(i, j, keep_swap=False)
+                    new_score = next_working_indiv.try_swap(idx, idx2, keep_swap=False)
                     if new_score < best_score:
                         # Commit the swap
                         next_working_indiv = working_indiv.copy()
-                        next_working_indiv.try_swap(i, j, keep_swap=True)
+                        next_working_indiv.try_swap(idx, idx2, keep_swap=True)
                         best_score = new_score
                         improved = True
                 working_indiv = next_working_indiv.copy()
@@ -487,6 +468,43 @@ class GeneticAlgorithm:
                 indiv = working_indiv
             res_population.append(indiv)
         return res_population
+
+    # def learning_step(self, population):
+    #
+    #     if not self.learning_type:
+    #         return population
+    #     indices = list(itertools.combinations(range(population[0].N ** 2), r=2))
+    #     res_population = list()
+    #     for indiv in population:
+    #         if self.learning_type == 'lamarkian':
+    #             working_indiv = indiv
+    #         if self.learning_type == 'darwinian':
+    #             working_indiv = indiv.copy()
+    #             working_indiv._compute_all_sums()
+    #             working_indiv._compute_fitness()
+    #         best_score = indiv.fitness
+    #         for k in range(self.learning_cap):
+    #             improved = False
+    #             next_working_indiv = working_indiv.copy()
+    #             for i, j in indices:
+    #
+    #                 # Try the swap without committing
+    #                 new_score = next_working_indiv.try_swap(i, j, keep_swap=False)
+    #                 if new_score < best_score:
+    #                     # Commit the swap
+    #                     next_working_indiv = working_indiv.copy()
+    #                     next_working_indiv.try_swap(i, j, keep_swap=True)
+    #                     best_score = new_score
+    #                     improved = True
+    #             working_indiv = next_working_indiv.copy()
+    #             if not improved:
+    #                 break
+    #         if self.learning_type == 'darwinian':
+    #             indiv.fitness = working_indiv.fitness
+    #         if self.learning_type == 'lamarkian':
+    #             indiv = working_indiv
+    #         res_population.append(indiv)
+    #     return res_population
 
     def play(self, max_steps=100):
         """

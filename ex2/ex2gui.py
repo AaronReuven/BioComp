@@ -67,6 +67,12 @@ class MagicSquareApp:
         self.entry_pop.grid(row=row_counter, column=1, sticky="w")
         row_counter += 1
 
+        tk.Label(self.control_frame, text="Learning cap:").grid(row=row_counter, column=0, sticky="w")
+        self.entry_lc = tk.Entry(self.control_frame, width=8)
+        self.entry_lc.insert(0, "1")
+        self.entry_lc.grid(row=row_counter, column=1, sticky="w")
+        row_counter += 1
+
         tk.Label(self.control_frame, text="Seed:").grid(row=row_counter, column=0, sticky="w")
         self.entry_seed = tk.Entry(self.control_frame, width=8)
         self.entry_seed.insert(0, "42")
@@ -178,6 +184,7 @@ class MagicSquareApp:
             square_mode = self.square_type_var.get()
             variant = self.variant_var.get()
             seed = int(self.entry_seed.get())
+            learning_cap = int(self.entry_lc.get())
             run_until_solved = self.var_run_until_solved.get()
 
             if variant == "lamarkian":
@@ -196,7 +203,7 @@ class MagicSquareApp:
                 mutation_rate=mutation_rate,
                 elitism=elitism,
                 learning_type=learning_type,
-                learning_cap=n,      # local search “steps” = N
+                learning_cap=learning_cap,      # local search “steps” = N
                 pop_size=pop_size,
                 seed=seed
             )
