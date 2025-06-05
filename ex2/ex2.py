@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 
 
@@ -81,14 +83,6 @@ class MagicSquareProblem:
                 else:
                     self.subsquare_sums[(idx - N - 1) % (N*N)] += v
 
-        pass
-    #     2 , 12 , 5 , 3
-    #     4 , 10 , 1 , 13
-    #     8 , 11, 9, 16
-    #     6, 14, 15, 7
-
-
-
     def _compute_fitness(self):
         """
         Compute the total  fitnessfrom row_sums, col_sums, and diagonals.
@@ -169,9 +163,6 @@ class MagicSquareProblem:
             else:
                 old_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
 
-
-
-
         self.flat[i], self.flat[j] = v2, v1
 
         self.row_sums[r1] += (v2 - v1)
@@ -193,7 +184,6 @@ class MagicSquareProblem:
             else:
                 self.subsquare_sums[(i - N - 1) % (N * N)] += (v2 - v1)
 
-
         self.row_sums[r2] += (v1 - v2)
         self.col_sums[c2] += (v1 - v2)
         if r2 == c2:
@@ -212,7 +202,6 @@ class MagicSquareProblem:
                 self.subsquare_sums[(j + N - 1) % (N * N)] += (v1 - v2)
             else:
                 self.subsquare_sums[(j - N - 1) % (N * N)] += (v1 - v2)
-
 
         new_penalty = abs(self.row_sums[r1] - M) + abs(self.col_sums[c1] - M)
         if r1 == c1:
@@ -251,7 +240,6 @@ class MagicSquareProblem:
                 new_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
 
         candidate_fit = self.fitness - old_penalty + new_penalty
-
         if not keep_swap:
             # Revert all changes
 
@@ -299,7 +287,7 @@ class MagicSquareProblem:
                 else:
                     self.subsquare_sums[(j - N - 1) % (N * N)] -= (v1 - v2)
 
-            return self.fitness
+            return candidate_fit
         else:
             self.fitness = candidate_fit
             return candidate_fit
@@ -433,35 +421,72 @@ class GeneticAlgorithm:
 
         return new_pop
 
+    # def learning_step(self, population):
+    #     """
+    #     Apply local search (Lamarkian or Darwinian) to each individual if learning_type is set.
+    #     Otherwise, return the population unchanged.
+    #     """
+    #     if not self.learning_type:
+    #         return population
+    #
+    #     rng = np.random.RandomState()  # separate RNG for local search
+    #     for indiv in population:
+    #         best_score = indiv.fitness
+    #         for _ in range(self.learning_cap):
+    #             N2 = indiv.N * indiv.N
+    #             chosen = rng.choice(N2, size=N2, replace=False)
+    #             improved = False
+    #             for idx in chosen:
+    #                 idx2 = rng.randint(0, N2)
+    #                 while idx2 == idx:
+    #                     idx2 = rng.randint(0, N2)
+    #                 # Try the swap without committing
+    #                 new_score = indiv.try_swap(idx, idx2, keep_swap=False)
+    #                 if new_score < best_score:
+    #                     # Commit the swap
+    #                     indiv.try_swap(idx, idx2, keep_swap=True)
+    #                     best_score = new_score
+    #                     improved = True
+    #             if not improved:
+    #                 break
+    #     return population
+
     def learning_step(self, population):
-        """
-        Apply local search (Lamarkian or Darwinian) to each individual if learning_type is set.
-        Otherwise, return the population unchanged.
-        """
+
         if not self.learning_type:
             return population
-
-        rng = np.random.RandomState()  # separate RNG for local search
+        indices = list(itertools.combinations(range(population[0].N ** 2), r=2))
+        res_population = list()
         for indiv in population:
+            if self.learning_type == 'lamarkian':
+                working_indiv = indiv
+            if self.learning_type == 'darwinian':
+                working_indiv = indiv.copy()
+                working_indiv._compute_all_sums()
+                working_indiv._compute_fitness()
             best_score = indiv.fitness
-            for _ in range(self.learning_cap):
-                N2 = indiv.N * indiv.N
-                chosen = rng.choice(N2, size=N2, replace=False)
+            for k in range(self.learning_cap):
                 improved = False
-                for idx in chosen:
-                    idx2 = rng.randint(0, N2)
-                    while idx2 == idx:
-                        idx2 = rng.randint(0, N2)
+                next_working_indiv = working_indiv.copy()
+                for i, j in indices:
+
                     # Try the swap without committing
-                    new_score = indiv.try_swap(idx, idx2, keep_swap=False)
+                    new_score = next_working_indiv.try_swap(i, j, keep_swap=False)
                     if new_score < best_score:
                         # Commit the swap
-                        indiv.try_swap(idx, idx2, keep_swap=True)
+                        next_working_indiv = working_indiv.copy()
+                        next_working_indiv.try_swap(i, j, keep_swap=True)
                         best_score = new_score
                         improved = True
+                working_indiv = next_working_indiv.copy()
                 if not improved:
                     break
-        return population
+            if self.learning_type == 'darwinian':
+                indiv.fitness = working_indiv.fitness
+            if self.learning_type == 'lamarkian':
+                indiv = working_indiv
+            res_population.append(indiv)
+        return res_population
 
     def play(self, max_steps=100):
         """

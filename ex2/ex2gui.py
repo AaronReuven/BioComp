@@ -67,6 +67,12 @@ class MagicSquareApp:
         self.entry_pop.grid(row=row_counter, column=1, sticky="w")
         row_counter += 1
 
+        tk.Label(self.control_frame, text="Seed:").grid(row=row_counter, column=0, sticky="w")
+        self.entry_seed = tk.Entry(self.control_frame, width=8)
+        self.entry_seed.insert(0, "42")
+        self.entry_seed.grid(row=row_counter, column=1, sticky="w")
+        row_counter += 1
+
         tk.Label(self.control_frame, text="Learning variant:").grid(row=row_counter, column=0, sticky="w")
         self.variant_var = tk.StringVar(value="none")
         radio_none = tk.Radiobutton(self.control_frame, text="None", variable=self.variant_var, value="none")
@@ -171,6 +177,7 @@ class MagicSquareApp:
             pop_size = int(self.entry_pop.get())
             square_mode = self.square_type_var.get()
             variant = self.variant_var.get()
+            seed = int(self.entry_seed.get())
             run_until_solved = self.var_run_until_solved.get()
 
             if variant == "lamarkian":
@@ -191,7 +198,7 @@ class MagicSquareApp:
                 learning_type=learning_type,
                 learning_cap=n,      # local search “steps” = N
                 pop_size=pop_size,
-                seed=42
+                seed=seed
             )
 
             best_fitness = float("inf")
@@ -215,6 +222,7 @@ class MagicSquareApp:
 
                 curr = min(ga.population, key=lambda ind: ind.fitness)
                 curr_fit = curr.fitness
+
                 if curr_fit < best_fitness:
                     best_fitness = curr_fit
                     best_indiv = curr.copy()
@@ -225,17 +233,36 @@ class MagicSquareApp:
                 self.master.update()
 
                 #Early stop if running until solved and found solution
-                if run_until_solved and (best_fitness == 0):
+                # if run_until_solved and (best_fitness == 0):
+                if best_fitness == 0:
                     break
 
             self.running = False
             if best_indiv:
-                final_square = np.array(best_indiv.flat).reshape(n, n)
-                fig, ax = plt.subplots()
-                ax.set_title(f"Best Fitness = {best_fitness} after {generation_count} gens")
-                ax.axis("off")
-                tbl = ax.table(cellText=final_square.tolist(), loc="center", cellLoc="center")
-                tbl.scale(1, 2)
+                if learning_type == 'darwinian':
+                    ga.learning_type = 'lamarkian'
+
+                    pre_final_square = np.array(best_indiv.flat).reshape(n, n)
+
+                    final_square = np.array(ga.learning_step([best_indiv])[0].flat).reshape(n, n)
+                    post_final_square = np.array(final_square.flat).reshape(n, n)
+                    fig, ax = plt.subplots(1,2)
+                    ax[0].set_title(f"Best Fitness = {best_fitness} after {generation_count} gens")
+                    ax[0].axis("off")
+                    tbl1 = ax[0].table(cellText=pre_final_square.tolist(), loc="center", cellLoc="center")
+                    tbl1.scale(1, 2)
+
+                    ax[1].set_title(f"After Learning")
+                    ax[1].axis("off")
+                    tbl2 = ax[1].table(cellText=post_final_square.tolist(), loc="center", cellLoc="center")
+                    tbl2.scale(1, 2)
+                else:
+                    final_square = np.array(best_indiv.flat).reshape(n, n)
+                    fig, ax = plt.subplots()
+                    ax.set_title(f"Best Fitness = {best_fitness} after {generation_count} gens")
+                    ax.axis("off")
+                    tbl = ax.table(cellText=final_square.tolist(), loc="center", cellLoc="center")
+                    tbl.scale(1, 2)
                 plt.show()
                 messagebox.showinfo("Done", "GA has finished running!")
 
