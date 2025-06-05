@@ -16,6 +16,8 @@ class MagicSquareProblem:
         self.N = size
         self.mode = mode
         self.constant = size * (size * size + 1) // 2  #
+        self.sub_square_constant = 2 * (size * size + 1)   #
+        self.pair_constant = (size * size + 1)   #
 
         # Use a Python list of ints rather than NumPy array, to allow in-place integer operations
         rng = np.random.RandomState(seed)
@@ -66,6 +68,16 @@ class MagicSquareProblem:
                 self.sec_diag += v
                 if self.mode == 'most_perfect':
                     self.pairs_sums[(N//2) + r % (N//2)] += v
+            if self.mode == 'mode_perfect':
+                self.subsquare_sums[idx] += v
+                self.subsquare_sums[(idx - 1) % (N*N)] += v
+                self.subsquare_sums[(idx - N) % (N*N)] += v
+                self.subsquare_sums[(idx - N - 1) % (N*N)] += v
+
+    #     1 , 2 , 3 , 4
+    #     5 , 6 , 7 , 8
+    #     9 , 10, 11, 12
+    #     13, 14, 15, 16
 
 
 
@@ -76,11 +88,18 @@ class MagicSquareProblem:
         """
         N = self.N
         M = self.constant
+        M_P = self.pair_constant
+        M_S = self.sub_square_constant
         f = 0
 
         for r in range(N):
             f += abs(self.row_sums[r] - M)
             f += abs(self.col_sums[r] - M)
+            if self.mode == 'most_perfect':
+                f += abs(self.pairs_sums[r] - M_P)
+        if self.mode == 'most_perfect':
+            for s in range(N*N):
+                f += abs(self.subsquare_sums[s] - M_S)
 
         f += abs(self.main_diag - M)
         f += abs(self.sec_diag - M)
@@ -98,6 +117,8 @@ class MagicSquareProblem:
         """
         N = self.N
         M = self.constant
+        M_P = self.pair_constant
+        M_S = self.sub_square_constant
 
         #  swap
         v1 = self.flat[i]
@@ -108,14 +129,35 @@ class MagicSquareProblem:
         old_penalty = abs(self.row_sums[r1] - M) + abs(self.col_sums[c1] - M)
         if r1 == c1:
             old_penalty += abs(self.main_diag - M)
+            if self.mode == 'most_perfect':
+                old_penalty += abs(self.pairs_sums[r1 % (N//2)] - M_P)
         if r1 + c1 == N - 1:
             old_penalty += abs(self.sec_diag - M)
+            if self.mode == 'most_perfect':
+                old_penalty += abs(self.pairs_sums[(N//2) + r1 % (N//2)] - M_P)
+        if self.mode == 'most_perfect':
+            old_penalty += abs(self.subsquare_sums[i] - M_S)
+            old_penalty += abs(self.subsquare_sums[(i - 1) % (N * N)] - M_S)
+            old_penalty += abs(self.subsquare_sums[(i - N) % (N * N)] - M_S)
+            old_penalty += abs(self.subsquare_sums[(i - N - 1) % (N * N)] - M_S)
 
         old_penalty += abs(self.row_sums[r2] - M) + abs(self.col_sums[c2] - M)
         if r2 == c2:
             old_penalty += abs(self.main_diag - M)
+            if self.mode == 'most_perfect':
+                old_penalty += abs(self.pairs_sums[r2 % (N//2)] - M_P)
         if r2 + c2 == N - 1:
             old_penalty += abs(self.sec_diag - M)
+            if self.mode == 'most_perfect':
+                old_penalty += abs(self.pairs_sums[(N//2) + r1 % (N//2)] - M_P)
+        if self.mode == 'most_perfect':
+            old_penalty += abs(self.subsquare_sums[j] - M_S)
+            old_penalty += abs(self.subsquare_sums[(j - 1) % (N * N)] - M_S)
+            old_penalty += abs(self.subsquare_sums[(j - N) % (N * N)] - M_S)
+            old_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
+
+
+
 
         self.flat[i], self.flat[j] = v2, v1
 
@@ -123,27 +165,63 @@ class MagicSquareProblem:
         self.col_sums[c1] += (v2 - v1)
         if r1 == c1:
             self.main_diag += (v2 - v1)
+            if self.mode == 'most_perfect':
+                self.pairs_sums[r1 % (N//2)] += (v2 - v1)
         if r1 + c1 == N - 1:
             self.sec_diag += (v2 - v1)
+            if self.mode == 'most_perfect':
+                self.pairs_sums[(N//2) + r1 % (N // 2)] += (v2 - v1)
+        if self.mode == 'most_perfect':
+            self.subsquare_sums[i] += (v2 - v1)
+            self.subsquare_sums[(i - 1) % (N * N)] += (v2 - v1)
+            self.subsquare_sums[(i - N) % (N * N)] += (v2 - v1)
+            self.subsquare_sums[(i - N - 1) % (N * N)] += (v2 - v1)
 
         self.row_sums[r2] += (v1 - v2)
         self.col_sums[c2] += (v1 - v2)
         if r2 == c2:
             self.main_diag += (v1 - v2)
+            if self.mode == 'most_perfect':
+                self.pairs_sums[r2 % (N//2)] += (v1 - v2)
         if r2 + c2 == N - 1:
             self.sec_diag += (v1 - v2)
+            if self.mode == 'most_perfect':
+                self.pairs_sums[(N//2) + r2 % (N // 2)] += (v1 - v2)
+        if self.mode == 'most_perfect':
+            self.subsquare_sums[j] += (v1 - v2)
+            self.subsquare_sums[(j - 1) % (N * N)] += (v1 - v2)
+            self.subsquare_sums[(j - N) % (N * N)] += (v1 - v2)
+            self.subsquare_sums[(j - N - 1) % (N * N)] += (v1 - v2)
 
         new_penalty = abs(self.row_sums[r1] - M) + abs(self.col_sums[c1] - M)
         if r1 == c1:
             new_penalty += abs(self.main_diag - M)
+            if self.mode == 'most_perfect':
+                new_penalty += abs(self.pairs_sums[r1 % (N//2)] - M_P)
         if r1 + c1 == N - 1:
             new_penalty += abs(self.sec_diag - M)
+            if self.mode == 'most_perfect':
+                new_penalty += abs(self.pairs_sums[(N//2) + r1 % (N//2)] - M_P)
+        if self.mode == 'most_perfect':
+            new_penalty += abs(self.subsquare_sums[i] - M_S)
+            new_penalty += abs(self.subsquare_sums[(i - 1) % (N * N)] - M_S)
+            new_penalty += abs(self.subsquare_sums[(i - N) % (N * N)] - M_S)
+            new_penalty += abs(self.subsquare_sums[(i - N - 1) % (N * N)] - M_S)
 
         new_penalty += abs(self.row_sums[r2] - M) + abs(self.col_sums[c2] - M)
         if r2 == c2:
             new_penalty += abs(self.main_diag - M)
+            if self.mode == 'most_perfect':
+                new_penalty += abs(self.pairs_sums[r2 % (N//2)] - M_P)
         if r2 + c2 == N - 1:
             new_penalty += abs(self.sec_diag - M)
+            if self.mode == 'most_perfect':
+                new_penalty += abs(self.pairs_sums[(N//2) + r2 % (N//2)] - M_P)
+        if self.mode == 'most_perfect':
+            new_penalty += abs(self.subsquare_sums[j] - M_S)
+            new_penalty += abs(self.subsquare_sums[(j - 1) % (N * N)] - M_S)
+            new_penalty += abs(self.subsquare_sums[(j - N) % (N * N)] - M_S)
+            new_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
 
         candidate_fit = self.fitness - old_penalty + new_penalty
 
@@ -158,15 +236,41 @@ class MagicSquareProblem:
             self.col_sums[c1] -= (v2 - v1)
             if r1 == c1:
                 self.main_diag -= (v2 - v1)
+                if self.mode == 'most_perfect':
+                    self.pairs_sums[r1 % (N // 2)] -= (v2 - v1)
             if r1 + c1 == N - 1:
                 self.sec_diag -= (v2 - v1)
+                if self.mode == 'most_perfect':
+                    self.pairs_sums[(N // 2) + r1 % (N // 2)] -= (v2 - v1)
+
+            if self.mode == 'most_perfect':
+                self.subsquare_sums[i] -= (v2 - v1)
+                self.subsquare_sums[(i - 1) % (N * N)] -= (v2 - v1)
+                self.subsquare_sums[(i - N) % (N * N)] -= (v2 - v1)
+                self.subsquare_sums[(i - N - 1) % (N * N)] -= (v2 - v1)
 
             self.row_sums[r2] -= (v1 - v2)
             self.col_sums[c2] -= (v1 - v2)
             if r2 == c2:
                 self.main_diag -= (v1 - v2)
+                if self.mode == 'most_perfect':
+                    self.pairs_sums[r2 % (N // 2)] -= (v1 - v2)
             if r2 + c2 == N - 1:
                 self.sec_diag -= (v1 - v2)
+
+            if r2 == c2:
+                self.main_diag += (v1 - v2)
+                if self.mode == 'most_perfect':
+                    self.pairs_sums[r2 % (N // 2)] += (v1 - v2)
+            if r2 + c2 == N - 1:
+                self.sec_diag += (v1 - v2)
+                if self.mode == 'most_perfect':
+                    self.pairs_sums[(N // 2) + r2 % (N // 2)] += (v1 - v2)
+            if self.mode == 'most_perfect':
+                self.subsquare_sums[j] += (v1 - v2)
+                self.subsquare_sums[(j - 1) % (N * N)] += (v1 - v2)
+                self.subsquare_sums[(j - N) % (N * N)] += (v1 - v2)
+                self.subsquare_sums[(j - N - 1) % (N * N)] += (v1 - v2)
 
             return self.fitness
         else:
