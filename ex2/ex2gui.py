@@ -169,6 +169,10 @@ class MagicSquareApp:
             self.labels.append(row_labels)
 
     def run_algorithm(self):
+        best_fitness_list = []
+        avg_fitness_list = []
+        worst_fitness_list = []
+
         try:
             self.running = True
             self.clear_display()
@@ -229,6 +233,10 @@ class MagicSquareApp:
 
                 curr = min(ga.population, key=lambda ind: ind.fitness)
                 curr_fit = curr.fitness
+                fitness_values = [ind.fitness for ind in ga.population]
+                best_fitness_list.append(curr_fit)
+                avg_fitness_list.append(np.mean(fitness_values))
+                worst_fitness_list.append(max(fitness_values))
 
                 if curr_fit < best_fitness:
                     best_fitness = curr_fit
@@ -270,6 +278,17 @@ class MagicSquareApp:
                     ax.axis("off")
                     tbl = ax.table(cellText=final_square.tolist(), loc="center", cellLoc="center")
                     tbl.scale(1, 2)
+
+                plt.figure()
+                plt.plot(best_fitness_list, label="Best Fitness", color="green")
+                plt.plot(avg_fitness_list, label="Average Fitness", color="blue")
+                plt.plot(worst_fitness_list, label="Worst Fitness", color="red")
+                plt.xlabel("Generation")
+                plt.ylabel("Fitness")
+                plt.title("GA Fitness Progression")
+                plt.legend()
+                plt.grid(True)
+                plt.tight_layout()
                 plt.show()
                 messagebox.showinfo("Done", "GA has finished running!")
 
