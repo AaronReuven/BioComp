@@ -51,8 +51,12 @@ class MagicSquareProblem:
         for i in range(N):
             self.row_sums[i] = 0
             self.col_sums[i] = 0
+            self.pairs_sums[i] = 0
+        for i in range(N*N):
+            self.subsquare_sums[i] = 0
         self.main_diag = 0
         self.sec_diag = 0
+
 
         # Accumulate sums from the flat list
         for idx in range(N * N):
@@ -68,16 +72,20 @@ class MagicSquareProblem:
                 self.sec_diag += v
                 if self.mode == 'most_perfect':
                     self.pairs_sums[(N//2) + r % (N//2)] += v
-            if self.mode == 'mode_perfect':
+            if self.mode == 'most_perfect':
                 self.subsquare_sums[idx] += v
                 self.subsquare_sums[(idx - 1) % (N*N)] += v
                 self.subsquare_sums[(idx - N) % (N*N)] += v
-                self.subsquare_sums[(idx - N - 1) % (N*N)] += v
+                if idx % N == 0:
+                    self.subsquare_sums[(idx + N - 1) % (N*N)] += v
+                else:
+                    self.subsquare_sums[(idx - N - 1) % (N*N)] += v
 
-    #     1 , 2 , 3 , 4
-    #     5 , 6 , 7 , 8
-    #     9 , 10, 11, 12
-    #     13, 14, 15, 16
+        pass
+    #     2 , 12 , 5 , 3
+    #     4 , 10 , 1 , 13
+    #     8 , 11, 9, 16
+    #     6, 14, 15, 7
 
 
 
@@ -103,7 +111,6 @@ class MagicSquareProblem:
 
         f += abs(self.main_diag - M)
         f += abs(self.sec_diag - M)
-
 
         self.fitness = int(f)
 
@@ -139,7 +146,10 @@ class MagicSquareProblem:
             old_penalty += abs(self.subsquare_sums[i] - M_S)
             old_penalty += abs(self.subsquare_sums[(i - 1) % (N * N)] - M_S)
             old_penalty += abs(self.subsquare_sums[(i - N) % (N * N)] - M_S)
-            old_penalty += abs(self.subsquare_sums[(i - N - 1) % (N * N)] - M_S)
+            if i % N == 0:
+                old_penalty += abs(self.subsquare_sums[(i + N - 1) % (N * N)] - M_S)
+            else:
+                old_penalty += abs(self.subsquare_sums[(i - N - 1) % (N * N)] - M_S)
 
         old_penalty += abs(self.row_sums[r2] - M) + abs(self.col_sums[c2] - M)
         if r2 == c2:
@@ -149,12 +159,15 @@ class MagicSquareProblem:
         if r2 + c2 == N - 1:
             old_penalty += abs(self.sec_diag - M)
             if self.mode == 'most_perfect':
-                old_penalty += abs(self.pairs_sums[(N//2) + r1 % (N//2)] - M_P)
+                old_penalty += abs(self.pairs_sums[(N//2) + r2 % (N//2)] - M_P)
         if self.mode == 'most_perfect':
             old_penalty += abs(self.subsquare_sums[j] - M_S)
             old_penalty += abs(self.subsquare_sums[(j - 1) % (N * N)] - M_S)
             old_penalty += abs(self.subsquare_sums[(j - N) % (N * N)] - M_S)
-            old_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
+            if j % N == 0:
+                old_penalty += abs(self.subsquare_sums[(j + N - 1) % (N * N)] - M_S)
+            else:
+                old_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
 
 
 
@@ -175,7 +188,11 @@ class MagicSquareProblem:
             self.subsquare_sums[i] += (v2 - v1)
             self.subsquare_sums[(i - 1) % (N * N)] += (v2 - v1)
             self.subsquare_sums[(i - N) % (N * N)] += (v2 - v1)
-            self.subsquare_sums[(i - N - 1) % (N * N)] += (v2 - v1)
+            if i % N == 0:
+                self.subsquare_sums[(i + N - 1) % (N * N)] += (v2 - v1)
+            else:
+                self.subsquare_sums[(i - N - 1) % (N * N)] += (v2 - v1)
+
 
         self.row_sums[r2] += (v1 - v2)
         self.col_sums[c2] += (v1 - v2)
@@ -191,7 +208,11 @@ class MagicSquareProblem:
             self.subsquare_sums[j] += (v1 - v2)
             self.subsquare_sums[(j - 1) % (N * N)] += (v1 - v2)
             self.subsquare_sums[(j - N) % (N * N)] += (v1 - v2)
-            self.subsquare_sums[(j - N - 1) % (N * N)] += (v1 - v2)
+            if j % N == 0:
+                self.subsquare_sums[(j + N - 1) % (N * N)] += (v1 - v2)
+            else:
+                self.subsquare_sums[(j - N - 1) % (N * N)] += (v1 - v2)
+
 
         new_penalty = abs(self.row_sums[r1] - M) + abs(self.col_sums[c1] - M)
         if r1 == c1:
@@ -206,7 +227,10 @@ class MagicSquareProblem:
             new_penalty += abs(self.subsquare_sums[i] - M_S)
             new_penalty += abs(self.subsquare_sums[(i - 1) % (N * N)] - M_S)
             new_penalty += abs(self.subsquare_sums[(i - N) % (N * N)] - M_S)
-            new_penalty += abs(self.subsquare_sums[(i - N - 1) % (N * N)] - M_S)
+            if i % N == 0:
+                new_penalty += abs(self.subsquare_sums[(i + N - 1) % (N * N)] - M_S)
+            else:
+                new_penalty += abs(self.subsquare_sums[(i - N - 1) % (N * N)] - M_S)
 
         new_penalty += abs(self.row_sums[r2] - M) + abs(self.col_sums[c2] - M)
         if r2 == c2:
@@ -221,7 +245,10 @@ class MagicSquareProblem:
             new_penalty += abs(self.subsquare_sums[j] - M_S)
             new_penalty += abs(self.subsquare_sums[(j - 1) % (N * N)] - M_S)
             new_penalty += abs(self.subsquare_sums[(j - N) % (N * N)] - M_S)
-            new_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
+            if j % N == 0:
+                new_penalty += abs(self.subsquare_sums[(j + N - 1) % (N * N)] - M_S)
+            else:
+                new_penalty += abs(self.subsquare_sums[(j - N - 1) % (N * N)] - M_S)
 
         candidate_fit = self.fitness - old_penalty + new_penalty
 
@@ -247,7 +274,10 @@ class MagicSquareProblem:
                 self.subsquare_sums[i] -= (v2 - v1)
                 self.subsquare_sums[(i - 1) % (N * N)] -= (v2 - v1)
                 self.subsquare_sums[(i - N) % (N * N)] -= (v2 - v1)
-                self.subsquare_sums[(i - N - 1) % (N * N)] -= (v2 - v1)
+                if i % N == 0:
+                    self.subsquare_sums[(i + N - 1) % (N * N)] -= (v2 - v1)
+                else:
+                    self.subsquare_sums[(i - N - 1) % (N * N)] -= (v2 - v1)
 
             self.row_sums[r2] -= (v1 - v2)
             self.col_sums[c2] -= (v1 - v2)
@@ -264,7 +294,10 @@ class MagicSquareProblem:
                 self.subsquare_sums[j] -= (v1 - v2)
                 self.subsquare_sums[(j - 1) % (N * N)] -= (v1 - v2)
                 self.subsquare_sums[(j - N) % (N * N)] -= (v1 - v2)
-                self.subsquare_sums[(j - N - 1) % (N * N)] -= (v1 - v2)
+                if j % N == 0:
+                    self.subsquare_sums[(j + N - 1) % (N * N)] -= (v1 - v2)
+                else:
+                    self.subsquare_sums[(j - N - 1) % (N * N)] -= (v1 - v2)
 
             return self.fitness
         else:
@@ -282,8 +315,8 @@ class MagicSquareProblem:
         clone.col_sums = list(self.col_sums)      # copy column sums
         clone.main_diag = self.main_diag
         clone.sec_diag = self.sec_diag
-        clone.subsquare_sums = self.subsquare_sums
-        clone.pairs_sums = self.pairs_sums
+        clone.subsquare_sums = list(self.subsquare_sums)
+        clone.pairs_sums = list(self.pairs_sums)
         clone.fitness = self.fitness
         return clone
 
