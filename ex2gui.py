@@ -5,7 +5,9 @@ import numpy as np
 import time
 import tkinter.messagebox as messagebox
 
-from ex2 import GeneticAlgorithm, MagicSquareProblem  
+from ex2 import GeneticAlgorithm, MagicSquareProblem  # assumes EX2.py is in the same folder
+
+
 class MagicSquareApp:
     def __init__(self, master):
         self.master = master
@@ -17,11 +19,9 @@ class MagicSquareApp:
         self.main_frame = tk.Frame(master, padx=10, pady=10)
         self.main_frame.pack()
 
-        # Frame for showing the square
         self.square_frame = tk.Frame(self.main_frame)
         self.square_frame.grid(row=0, column=0, padx=10, sticky="nw")
 
-        # Frame for controls
         self.control_frame = tk.Frame(self.main_frame)
         self.control_frame.grid(row=0, column=1, padx=10, sticky="ne")
 
@@ -185,11 +185,9 @@ class MagicSquareApp:
 
             generation_count = 0
             while self.running:
-                # If not running until solved and we've reached the generation limit, stop
                 if (not run_until_solved) and (generation_count >= generations):
                     break
 
-                # 1) (Optionally) local search
                 ga.population = ga.learning_step(ga.population)
                 # 2) Next generation
                 ga.population = ga.generation_step(ga.population)
