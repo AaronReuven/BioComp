@@ -2,9 +2,7 @@ import numpy as np
 
 
 class MagicSquareProblem:
-    """
-    Magic Square individual with in-place swaps and incremental O(1) fitness updates.
-    """
+    """    """
 
     def __init__(self, size, seed=None, mode="standard"):
         """
@@ -63,8 +61,8 @@ class MagicSquareProblem:
 
     def _compute_fitness(self):
         """
-        Compute the total  fitnessfrom row_sums, col_sums, and diagonals.
-        Lower fitness is better; a perfect magic square has fitness == 0.
+        Compute the total fitness from row_sums, col_sums, and diagonals.
+        Also includes most-perfect constraints if mode is 'most_perfect'.
         """
         N = self.N
         M = self.constant
@@ -77,6 +75,32 @@ class MagicSquareProblem:
         f += abs(self.main_diag - M)
         f += abs(self.sec_diag - M)
 
+        # r most-perfect magic squares
+        if self.mode == "most_perfect":
+            s = N * N + 1
+
+            # 2x2 sub-squares
+            for i in range(N - 1):
+                for j in range(N - 1):
+                    idx1 = i * N + j
+                    idx2 = idx1 + 1
+                    idx3 = idx1 + N
+                    idx4 = idx3 + 1
+                    block_sum = (
+                            self.flat[idx1] + self.flat[idx2] +
+                            self.flat[idx3] + self.flat[idx4]
+                    )
+                    f += abs(block_sum - 2 * s)
+
+            half = N // 2
+            for i in range(N):
+                idx1 = i * N + i
+                idx2 = ((i + half) % N) * N + ((i + half) % N)
+                f += abs((self.flat[idx1] + self.flat[idx2]) - s)
+
+                idx1 = i * N + (N - 1 - i)
+                idx2 = ((i + half) % N) * N + (N - 1 - ((i + half) % N))
+                f += abs((self.flat[idx1] + self.flat[idx2]) - s)
 
         self.fitness = int(f)
 
@@ -376,4 +400,3 @@ if __name__ == "__main__":
     print("Best fitness:", score)
     if solution is not None:
         print(np.array(solution.flat).reshape(N, N))
-
