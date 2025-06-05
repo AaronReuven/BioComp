@@ -257,20 +257,14 @@ class MagicSquareProblem:
                     self.pairs_sums[r2 % (N // 2)] -= (v1 - v2)
             if r2 + c2 == N - 1:
                 self.sec_diag -= (v1 - v2)
+                if self.mode == 'most_perfect':
+                    self.pairs_sums[(N // 2) + r2 % (N // 2)] -= (v1 - v2)
 
-            if r2 == c2:
-                self.main_diag += (v1 - v2)
-                if self.mode == 'most_perfect':
-                    self.pairs_sums[r2 % (N // 2)] += (v1 - v2)
-            if r2 + c2 == N - 1:
-                self.sec_diag += (v1 - v2)
-                if self.mode == 'most_perfect':
-                    self.pairs_sums[(N // 2) + r2 % (N // 2)] += (v1 - v2)
             if self.mode == 'most_perfect':
-                self.subsquare_sums[j] += (v1 - v2)
-                self.subsquare_sums[(j - 1) % (N * N)] += (v1 - v2)
-                self.subsquare_sums[(j - N) % (N * N)] += (v1 - v2)
-                self.subsquare_sums[(j - N - 1) % (N * N)] += (v1 - v2)
+                self.subsquare_sums[j] -= (v1 - v2)
+                self.subsquare_sums[(j - 1) % (N * N)] -= (v1 - v2)
+                self.subsquare_sums[(j - N) % (N * N)] -= (v1 - v2)
+                self.subsquare_sums[(j - N - 1) % (N * N)] -= (v1 - v2)
 
             return self.fitness
         else:
@@ -288,6 +282,8 @@ class MagicSquareProblem:
         clone.col_sums = list(self.col_sums)      # copy column sums
         clone.main_diag = self.main_diag
         clone.sec_diag = self.sec_diag
+        clone.subsquare_sums = self.subsquare_sums
+        clone.pairs_sums = self.pairs_sums
         clone.fitness = self.fitness
         return clone
 
