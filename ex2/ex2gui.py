@@ -195,7 +195,7 @@ class MagicSquareApp:
                 learning_type = None
 
             mode = "most_perfect" if square_mode == "most_perfect" else "standard"
-
+            assert (n % 4 == 0 and mode == 'most_perfect') or mode == 'standard'
             # Build the GA
             ga = GeneticAlgorithm(
                 MagicSquareProblem,
