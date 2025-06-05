@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 import matplotlib.pyplot as plt
 import numpy as np
-from Ex2 import GeneticAlgorithm, MagicSquareProblem
+from Ex2_2 import GeneticAlgorithm, MagicSquareProblem
 import tkinter.messagebox as messagebox
 
 
@@ -224,7 +224,7 @@ class MagicSquareApp:
                 ax[1].set_title(f"Best Fitness: {best_fitness}")
                 ax[1].axis('off')
                 ga.learning_type = 'lamarkian'
-                solution = ga.learning_step([best_individual])[0]
+                solution = best_individual.optimization_action(steps=n)
                 table2 = ax[1].table(cellText=solution.square, loc='center', cellLoc='center')
                 table2.scale(1, 2)
 

@@ -9,6 +9,20 @@ import abc
 import tqdm
 import itertools
 
+
+def invert_array(arr):
+    inverted_array = np.zeros(arr.size)
+    n = 1
+    for i in range(arr.size):
+        j = 0
+        while arr[j] != n:
+            if arr[j] > n:
+                inverted_array[i] += 1
+            j += 1
+        n += 1
+    return inverted_array
+
+
 class GeneticAlgorithmProblem(metaclass=abc.ABCMeta):
     def __init__(self, seed=None, min_max='max', min_value=-np.inf, max_value=np.inf):
         self.seed = seed
@@ -80,52 +94,106 @@ class MagicSquareProblem(GeneticAlgorithmProblem):
             return f
 
     def crossover(self, other, crossover_points=1):
-        # cross over we defined as in the lecture with multiple crossover points,
-        # while fixing only the values from the other parent to make it valid
-        assert self.square.shape == other.square.shape, "need to be same shape."
+        assert self.square.shape == other.square.shape
         self.computed_fitness = None
         self.random.set_state(self.random_state)
         flatten_square = self.square.flatten()
         other_flatten_square = other.square.flatten()
-        # generating crossover points
+        inv_flatten_square = invert_array(flatten_square)
+        inv_other_flatten_square = invert_array(other_flatten_square)
+        # print(inv_flatten_square)
+        # print(inv_other_flatten_square)
         points = np.sort(self.random.choice(range(1, self.square.size), size=crossover_points, replace=False))
         points = np.concatenate(([0], points, [self.square.size]))
-        # choosing whether to use the prime parent first or second
         choice = self.random.choice(['first', 'second'])
-        result_flatten_square = np.empty_like(flatten_square)
-        place_parent_1 = np.empty_like(flatten_square)
+        crossed_inv_result_flatten_square = np.empty_like(inv_flatten_square, dtype=int)
+        inv_result_flatten_square = np.empty_like(inv_flatten_square, dtype=int)
+        result_flatten_square = np.empty_like(inv_flatten_square, dtype=int)
+        # place_parent_1 = np.empty_like(flatten_square)
         # loop on the crossover points and use the correct parent
         for i in range(len(points) - 1):
             start, end = points[i], points[i + 1]
             if (i % 2 == 0 and choice == 'first') or (i % 2 == 1 and choice == 'second'):
-                result_flatten_square[start:end] = flatten_square[start:end]
-                place_parent_1[start:end] = True
+                crossed_inv_result_flatten_square[start:end] = inv_flatten_square[start:end]
+                # place_parent_1[start:end] = True
             elif (i % 2 == 1 and choice == 'first') or (i % 2 == 0 and choice == 'second'):
-                result_flatten_square[start:end] = other_flatten_square[start:end]
-                place_parent_1[start:end] = False
+                crossed_inv_result_flatten_square[start:end] = inv_other_flatten_square[start:end]
+                # place_parent_1[start:end] = False
+        # print(crossed_inv_result_flatten_square)
+        for i in range(crossed_inv_result_flatten_square.size - 1, -1, -1):
+            inv_result_flatten_square[i] = crossed_inv_result_flatten_square[i]
+            for j in range(i + 1, crossed_inv_result_flatten_square.size):
+                if inv_result_flatten_square[j] >= inv_result_flatten_square[i]:
+                    inv_result_flatten_square[j] += 1
 
-        unique_elements = set(np.arange(1, self.square.size + 1))
-        seen = set()
-        duplicates = list()
-        dup_dict = dict()
-        # look for duplicates from the other parent
-        for i, val in enumerate(result_flatten_square):
-            if val not in seen:
-                if not place_parent_1[i]:
-                    dup_dict[val] = i
-                seen.add(val)
-            elif place_parent_1[i]:
-                duplicates.append(dup_dict[val])
-            else:
-                duplicates.append(i)
-        # get all missing values shuffle them and input them in the duplicate locations
-        missing = list(unique_elements - seen)
-        self.random.shuffle(missing)
-        result_flatten_square[duplicates] = missing
+        # print(inv_result_flatten_square)
+
+        for i, v in enumerate(inv_result_flatten_square):
+            result_flatten_square[v] = i + 1
+        # print(result_flatten_square)
         self.square = result_flatten_square.reshape((self.size, self.size))
         self.random_state = self.random.get_state()
 
         return self
+
+
+
+        # count = 0
+        # for i, v in enumerate(other_flatten_square):
+        #     if i+1 >= v:
+        #         count -= 1
+
+            # inv_other_flatten_square[v - 1] = i + 1 + count
+
+    # 6 3 2 1 5 4
+    # 3 2 1 2 1 0
+    # def crossover(self, other, crossover_points=1):
+    #     # cross over we defined as in the lecture with multiple crossover points,
+    #     # while fixing only the values from the other parent to make it valid
+    #     assert self.square.shape == other.square.shape, "need to be same shape."
+    #     self.computed_fitness = None
+    #     self.random.set_state(self.random_state)
+    #     flatten_square = self.square.flatten()
+    #     other_flatten_square = other.square.flatten()
+    #     # generating crossover points
+    #     points = np.sort(self.random.choice(range(1, self.square.size), size=crossover_points, replace=False))
+    #     points = np.concatenate(([0], points, [self.square.size]))
+    #     # choosing whether to use the prime parent first or second
+    #     choice = self.random.choice(['first', 'second'])
+    #     result_flatten_square = np.empty_like(flatten_square)
+    #     place_parent_1 = np.empty_like(flatten_square)
+    #     # loop on the crossover points and use the correct parent
+    #     for i in range(len(points) - 1):
+    #         start, end = points[i], points[i + 1]
+    #         if (i % 2 == 0 and choice == 'first') or (i % 2 == 1 and choice == 'second'):
+    #             result_flatten_square[start:end] = flatten_square[start:end]
+    #             place_parent_1[start:end] = True
+    #         elif (i % 2 == 1 and choice == 'first') or (i % 2 == 0 and choice == 'second'):
+    #             result_flatten_square[start:end] = other_flatten_square[start:end]
+    #             place_parent_1[start:end] = False
+    #
+    #     unique_elements = set(np.arange(1, self.square.size + 1))
+    #     seen = set()
+    #     duplicates = list()
+    #     dup_dict = dict()
+    #     # look for duplicates from the other parent
+    #     for i, val in enumerate(result_flatten_square):
+    #         if val not in seen:
+    #             if not place_parent_1[i]:
+    #                 dup_dict[val] = i
+    #             seen.add(val)
+    #         elif place_parent_1[i]:
+    #             duplicates.append(dup_dict[val])
+    #         else:
+    #             duplicates.append(i)
+    #     # get all missing values shuffle them and input them in the duplicate locations
+    #     missing = list(unique_elements - seen)
+    #     self.random.shuffle(missing)
+    #     result_flatten_square[duplicates] = missing
+    #     self.square = result_flatten_square.reshape((self.size, self.size))
+    #     self.random_state = self.random.get_state()
+    #
+    #     return self
 
     def mutation(self, mutation_rate=0.05):
         # mutation we defined here as swapping two places
@@ -544,12 +612,19 @@ if __name__ == "__main__":
     pass
 
 # a = np.array([[10,8,1,15], [14,5,4,11], [3,9,16,6], [7,12,13,2]])
-# msp = MagicSquareProblem(4, square=a, mode="most_perfect")
+# a = np.array([3,2,1,5,4])
+# msp = MagicSquareProblem(4, mode="most_perfect")
 # print(msp)
 # print(msp.fitness())
 # print(a)
 # a = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+# a = np.array([3,2,1,5,4])
 # arr1 = np.array(a).reshape((4,4))
+# msp2 = MagicSquareProblem(4, mode="most_perfect")
+# print(msp)
+# print(msp2)
+# print(msp.crossover(msp2))
+
 # print(arr1)
 # print(arr1.shape)
 # for i in range(4):
