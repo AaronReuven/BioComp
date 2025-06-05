@@ -5,9 +5,7 @@ import numpy as np
 import time
 import tkinter.messagebox as messagebox
 
-from ex2 import GeneticAlgorithm, MagicSquareProblem  # assumes EX2.py is in the same folder
-
-
+from ex2 import GeneticAlgorithm, MagicSquareProblem  
 class MagicSquareApp:
     def __init__(self, master):
         self.master = master
